@@ -132,11 +132,8 @@ class GapRegistry:
             and transfer_check.transfer_problem_id != transfer_check.original_problem_id
         )
         if not valid_transfer:
-            # An invalid check cannot prove recovery. It also must not erase an
-            # already-active blocker or cause an unrelated concept to be accepted.
+            # An invalid check is not evidence of transfer; remain pending.
             gap.transfer_verified = False
-            if gap.status == GAP_RECOVERED:
-                gap.status = GAP_RECOVERED_PENDING_TRANSFER
             return gap
 
         gap.transfer_verified = bool(transfer_check.passed)
@@ -174,7 +171,7 @@ def select_transfer_problem(
 
     staged = [
         q for q in items
-        if q.concept_id == concept_id and q.kind in ("practice", "reassessment") and q.id not in exclude
+        if q.concept_id == concept_id and q.kind == "reassessment" and q.id not in exclude
     ]
     if staged:
         return staged[0]
