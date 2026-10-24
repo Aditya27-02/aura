@@ -535,12 +535,21 @@ def verify_transfer(sid: str, req: TransferVerifyRequest):
     ):
         raise HTTPException(status_code=400, detail="Selected task is not a valid curated transfer task for this gap.")
 
+    confirmed_structural_difference = (
+        req.structurally_different
+        and transfer_item.id in curated_ids
+        and transfer_item.concept_id == gap.concept_id
+        and transfer_item.id != expected_original_id
+    )
+    if not confirmed_structural_difference:
+        raise HTTPException(status_code=400, detail="The selected task lacks confirmed structural difference.")
+
     check = make_transfer_check(
         transfer_item,
         original_problem_id=expected_original_id,
         passed=req.passed,
         note=req.note,
-        structurally_different=True,
+        structurally_different=confirmed_structural_difference,
     )
     session.gaps.verify_transfer(gap, check)
     data["pending_transfer_problem_id"] = None
