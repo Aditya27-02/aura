@@ -132,8 +132,7 @@ class GapRegistry:
             and transfer_check.transfer_problem_id != transfer_check.original_problem_id
         )
         if not valid_transfer:
-            # An invalid check is not evidence of transfer; remain pending.
-            gap.transfer_verified = False
+            # Invalid checks are ignored entirely; lifecycle state is unchanged.
             return gap
 
         gap.transfer_verified = bool(transfer_check.passed)
