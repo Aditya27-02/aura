@@ -211,8 +211,32 @@ def test_complete_biology_loop():
     r = client.post(f"/api/session/{sid}/teach", json={"target": "golgi"})
     assert r.status_code == 200
 
-    r = client.post(f"/api/session/{sid}/verify-transfer", json={"passed": True})
+    r = client.post(
+        f"/api/session/{sid}/mark-recovered",
+        json={"passed": True, "note": "Biology original reassessment passed"},
+    )
     assert r.status_code == 200
+    assert r.json()["gap"]["status"] == "recovered_pending_transfer"
+
+    selected = client.get(f"/api/session/{sid}/transfer-problem")
+    assert selected.status_code == 200
+    task_data = selected.json()
+    assert task_data["available"] is True
+    transfer_task = task_data["transfer_problem"]
+
+    r = client.post(
+        f"/api/session/{sid}/verify-transfer",
+        json={
+            "passed": True,
+            "transfer_problem_id": transfer_task["id"],
+            "original_problem_id": task_data["original_problem_id"],
+            "structurally_different": task_data["structurally_different"],
+            "note": "Curated Biology transfer task passed",
+        },
+    )
+    assert r.status_code == 200
+    assert r.json()["gap"]["status"] == "recovered"
+    assert r.json()["gap"]["transfer_verified"] is True
 
     r = client.post(f"/api/session/{sid}/close")
     assert r.status_code == 200
