@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURA — Adaptive Learning Diagnosis Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand">
+        <span class="logo">AURA</span>
+        <span class="version-tag">PS17 / PS10</span>
+      </div>
+      <nav class="main-nav">
+        <button id="nav-home" class="nav-btn ghost">Home</button>
+        <button id="nav-map" class="nav-btn ghost" disabled>Knowledge Map</button>
+        <button id="nav-privacy" class="nav-btn ghost-subtle" disabled>§8 Privacy Inspector</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="app-main">
+    
+    <!-- SCREEN 1: Landing -->
+    <section data-screen="landing" class="screen active">
+      <div class="hero">
+        <div class="hero-badge">ACTIVE BAYESIAN DIAGNOSIS</div>
+        <h1 class="hero-title">AURA</h1>
+        <h2 class="hero-subtitle">Adaptive Learning Diagnosis Engine</h2>
+        <p class="hero-desc">
+          AURA doesn't just mark wrong answers. It models competing blocking-gap hypotheses, asks the one question that maximises Information Gain, delivers grounded explanations, and verifies recovery through transfer.
+        </p>
+      </div>
+
+      <div class="domain-section-title">Select Domain Pack</div>
+      <div class="domain-selector">
+        <div class="domain-card" data-domain="DSA">
+          <div class="domain-card-header">
+            <span class="domain-icon">⚡</span>
+            <div>
+              <h3>DSA Domain Pack</h3>
+              <span class="domain-tag">Executable Code Signal Adapter</span>
+            </div>
+          </div>
+          <p>Diagnose binary search boundary conditions, loop invariants, and index shrinking errors from code test failures and static AST patterns.</p>
+          <button class="primary start-btn">Start DSA Diagnostic Session →</button>
+        </div>
+
+        <div class="domain-card" data-domain="Biology">
+          <div class="domain-card-header">
+            <span class="domain-icon">🧬</span>
+            <div>
+              <h3>Biology Domain Pack</h3>
+              <span class="domain-tag">Multimodal / Theory Signal Adapter</span>
+            </div>
+          </div>
+          <p>Diagnose cell organelle misconceptions (Golgi vs. Rough ER) from OCR question scans, distractor choice patterns, and spoken explanations.</p>
+          <button class="primary start-btn">Start Biology Diagnostic Session →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 2: Dashboard -->
+    <section data-screen="dashboard" class="screen">
+      <div class="session-header">
+        <div>
+          <h2 class="session-title">Diagnostic Workspace</h2>
+          <div class="session-meta">
+            <span class="badge" id="current-domain-badge">Domain</span>
+            <span class="session-id-display" id="current-session-id"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="loop-progress">
+        <div class="step-indicator" data-step="1">
+          <div class="circle">1</div>
+          <span>Observe</span>
+        </div>
+        <div class="step-indicator" data-step="2">
+          <div class="circle">2</div>
+          <span>Diagnose</span>
+        </div>
+        <div class="step-indicator" data-step="3">
+          <div class="circle">3</div>
+          <span>Ask</span>
+        </div>
+        <div class="step-indicator" data-step="4">
+          <div class="circle">4</div>
+          <span>Update</span>
+        </div>
+        <div class="step-indicator" data-step="5">
+          <div class="circle">5</div>
+          <span>Teach</span>
+        </div>
+        <div class="step-indicator" data-step="6">
+          <div class="circle">6</div>
+          <span>Verify</span>
+        </div>
+      </div>
+
+      <div class="panels-container" id="panels-container">
+        <!-- Panels injected dynamically -->
+      </div>
+      
+      <div class="action-footer" id="dashboard-footer" style="display:none;">
+         <button id="btn-next-step" class="primary large-btn">Run Active Diagnosis →</button>
+      </div>
+    </section>
+
+    <!-- SCREEN 3: Knowledge Map -->
+    <section data-screen="map" class="screen">
+      <div class="screen-header">
+        <h2>Learner Knowledge Map</h2>
+        <p class="screen-desc">Derived projection of the concept graph G<sub>K</sub> overlayed with BKT belief states B<sub>u</sub>.</p>
+      </div>
+      <div class="map-legend">
+        <span><span class="status-verified">[OK]</span> Verified</span>
+        <span><span class="status-developing">[~~]</span> Developing</span>
+        <span><span class="status-review">[  ]</span> Needs Review</span>
+        <span><span class="status-blocker">[!!]</span> Active Blocker</span>
+      </div>
+      <pre id="knowledge-map-container" class="code-block map-view"></pre>
+      <button class="ghost mt-4 btn-back-to-dash">← Back to Workspace</button>
+    </section>
+
+    <!-- SCREEN 4: Privacy Inspector (Modal / Dedicated Control) -->
+    <section data-screen="privacy" class="screen">
+      <div class="screen-header">
+        <h2>§8 Privacy Inspector</h2>
+        <p class="screen-desc">Proving that persistent personalization memory stays local.</p>
+      </div>
+      <div class="privacy-claim">
+        <strong>§8 Privacy Invariant:</strong> "Persistent personalization memory stays local; remote services receive only the minimum temporary context required for the current operation."
+      </div>
+      <div class="privacy-meta-badge"><code>dry_run = true</code> — Nothing was transmitted to external servers.</div>
+      <pre id="privacy-capsule-container" class="code-block json-hl mt-4"></pre>
+      <button id="btn-back-from-privacy" class="ghost mt-4">← Back to Workspace</button>
+    </section>
+
+    <!-- SCREEN 5: Summary -->
+    <section data-screen="summary" class="screen">
+      <div class="screen-header">
+        <h2>Session Summary & One-Writer Commit</h2>
+        <p class="screen-desc">Deterministic session ledger committed to SQLite memory store.</p>
+      </div>
+      <div class="summary-stats" id="summary-stats">
+        <!-- Injected -->
+      </div>
+      <div class="mt-8 flex gap-4">
+        <button id="btn-home-from-summary" class="primary">Start New Session</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TEMPLATES -->
+  
+  <!-- 1. Evidence Template DSA -->
+  <template id="tpl-evidence-dsa">
+    <div class="panel card appear border-slate">
+      <div class="panel-header">
+        <span class="panel-label">STAGE 1: EVIDENCE OBSERVED — CODE SUBMISSION</span>
+        <span class="badge badge-subtle">Domain: DSA</span>
+      </div>
+      <div class="panel-body">
+        <div class="evidence-grid">
+          <div class="evidence-main">
+            <div class="field-label">Submitted Code (`binary_search`):</div>
+            <pre class="code-block code-highlight"><code class="code-text"></code></pre>
+          </div>
+          <div class="evidence-sidebar">
+            <div class="field-label">Test Case Execution:</div>
+            <div class="test-results-list"></div>
+            
+            <div class="field-label mt-4">AST Signal Model Detection:</div>
+            <div class="signal-badge pattern-badge"></div>
+
+            <div class="field-label mt-4">Historical Recurrence:</div>
+            <div class="recurrence-badge"></div>
+          </div>
+        </div>
+        <div class="panel-footer-note">
+          ⚡ AURA normalizes test failures and AST signals into an <code>Event</code> object and updates Bayesian Knowledge Tracing (BKT) beliefs automatically.
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 1. Evidence Template Bio -->
+  <template id="tpl-evidence-bio">
+    <div class="panel card appear border-slate">
+      <div class="panel-header">
+        <span class="panel-label">STAGE 1: EVIDENCE OBSERVED — MULTIMODAL THEORY</span>
+        <span class="badge badge-subtle">Domain: Biology</span>
+      </div>
+      <div class="panel-body">
+        <div class="evidence-grid">
+          <div class="evidence-main">
+            <div class="field-label">OCR Scanned Question:</div>
+            <div class="ocr-question-box">"Which organelle is primarily responsible for modifying, sorting, and packaging proteins for secretion?"</div>
+            <div class="field-label mt-4">Learner Spoken Answer (Voice STT):</div>
+            <div class="voice-answer-box">"the rough ER"</div>
+          </div>
+          <div class="evidence-sidebar">
+            <div class="field-label">Evaluation Verdict:</div>
+            <div class="verdict-tag wrong">INCORRECT</div>
+            
+            <div class="field-label mt-4">Distractor Pattern:</div>
+            <div class="signal-badge pattern-badge">attributed_packaging_to_rer</div>
+
+            <div class="field-label mt-4">Historical Recurrence:</div>
+            <div class="recurrence-badge">Yes (2 prior sessions)</div>
+          </div>
+        </div>
+        <div class="panel-footer-note">
+          🧬 AURA converts OCR + voice STT inputs into structured evidence, mapping distractor choices to candidate misconception nodes.
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 2. Hypothesis Distribution Template -->
+  <template id="tpl-hypothesis">
+    <div class="panel card appear border-blue">
+      <div class="panel-header">
+        <div>
+          <span class="panel-label">STAGE 2: BAYESIAN GAP DIAGNOSIS</span>
+          <p class="panel-subhead">Explicit posterior probability distribution P(g | evidence, G<sub>K</sub>)</p>
+        </div>
+        <div class="entropy-card">
+          <span class="entropy-title">Shannon Entropy H(π)</span>
+          <span class="entropy-val"></span>
+          <span class="entropy-status">High Uncertainty</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="hypotheses-list">
+          <!-- Bars injected here -->
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 3. Diagnostic Question Template -->
+  <template id="tpl-diagnostic">
+    <div class="panel card appear border-purple">
+      <div class="panel-header">
+        <div>
+          <span class="panel-label">STAGE 3: ACTIVE DIAGNOSIS — QUESTION SELECTION</span>
+          <p class="panel-subhead">Selecting q* = argmax [ IG(q) - λ·C(q) ] to maximize expected Information Gain</p>
+        </div>
+        <div class="flex gap-2 items-center">
+          <button class="btn-next-question ghost-subtle" title="Request an alternate unseen high-information question">Try Alternate Question 🔄</button>
+          <span class="ig-badge">IG Maximised</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="why-asking-box mb-4">
+          <span class="why-asking-label">Why AURA is Asking This Question:</span>
+          <div class="why-asking-text"></div>
+        </div>
+        <div class="question-prompt mb-4 text-lg font-medium"></div>
+        <div class="field-label mb-2">Select your response:</div>
+        <div class="options-list flex flex-col gap-2">
+          <!-- Option buttons injected here -->
+        </div>
+      </div>
+    </div>
+  </template>
+  
+  <!-- 4. Updated Posterior Template -->
+  <template id="tpl-updated-posterior">
+    <div class="panel card appear border-indigo">
+      <div class="panel-header">
+        <div>
+          <span class="panel-label">STAGE 4: POSTERIOR UPDATE & ENTROPY COLLAPSE</span>
+          <p class="panel-subhead">Bayesian update incorporating diagnostic question outcome</p>
+        </div>
+        <div class="entropy-card success">
+          <span class="entropy-title">Updated Entropy H(π)</span>
+          <span class="entropy-val"></span>
+          <span class="entropy-status">Confidence Clear</span>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="what-changed-box mb-4">
+          <span class="what-changed-label">What Changed:</span>
+          <div class="what-changed-text"></div>
+        </div>
+        <div class="hypotheses-list">
+          <!-- Bars injected here -->
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 5. Materialized Gap Template -->
+  <template id="tpl-gap">
+    <div class="panel card appear border-red">
+      <div class="panel-header">
+        <div>
+          <span class="panel-label text-red-600">MATERIALIZED LEARNING GAP</span>
+          <p class="panel-subhead">First-class LearningGap primitive created (AURA Section 6)</p>
+        </div>
+        <span class="gap-status-badge">active_blocker</span>
+      </div>
+      <div class="panel-body">
+        <div class="gap-grid">
+          <div class="gap-stat">
+            <span class="gap-stat-label">Target Concept</span>
+            <span class="gap-stat-val gap-concept"></span>
+          </div>
+          <div class="gap-stat">
+            <span class="gap-stat-label">Misconception Class</span>
+            <span class="gap-stat-val gap-class highlight-red"></span>
+          </div>
+          <div class="gap-stat">
+            <span class="gap-stat-label">Posterior Confidence</span>
+            <span class="gap-stat-val gap-prob"></span>
+          </div>
+          <div class="gap-stat">
+            <span class="gap-stat-label">Affected Prerequisites</span>
+            <span class="gap-stat-val gap-prereqs"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 6. Grounded Teaching Template -->
+  <template id="tpl-teaching">
+    <div class="panel card appear border-blue">
+      <div class="panel-header text-blue-600">
+        <div>
+          <span class="panel-label">STAGE 5: GROUNDED TEACHING & TUTORING</span>
+          <p class="panel-subhead">Retrieval-grounded response with citation tracking</p>
+        </div>
+        <span class="teaching-action-badge"></span>
+      </div>
+      <div class="panel-body">
+        <div class="teaching-message text-lg mb-4 leading-relaxed"></div>
+        <div class="citations-box">
+          <span class="citations-title">Retrieved & Cited Sources:</span>
+          <div class="teaching-citations"></div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 7. Transfer Verification Template -->
+  <template id="tpl-transfer">
+    <div class="panel card appear border-amber">
+      <div class="panel-header text-amber-600">
+        <div>
+          <span class="panel-label">STAGE 6: TRANSFER VERIFICATION</span>
+          <p class="panel-subhead">A gap is NEVER marked recovered until passing a structurally different transfer problem</p>
+        </div>
+        <span class="transfer-badge">Structurally Different</span>
+      </div>
+      <div class="panel-body">
+        <div class="field-label mb-2">Transfer Challenge Problem:</div>
+        <div class="transfer-prompt mb-4 code-block"></div>
+        <button class="primary btn-submit-transfer large-btn">Submit & Verify Transfer Challenge →</button>
+        <div class="transfer-result mt-4 hidden p-4 rounded bg-gray-50 border"></div>
+      </div>
+    </div>
+  </template>
+
+  <!-- 8. Recovery Template -->
+  <template id="tpl-recovery">
+    <div class="panel card appear border-green">
+      <div class="panel-header text-green-600">
+        <div>
+          <span class="panel-label">RECOVERY VERIFIED & PERSISTED</span>
+          <p class="panel-subhead">Gap status: candidate → active_blocker → intervention_applied → recovered_pending_transfer → RECOVERED</p>
+        </div>
+        <span class="badge badge-green">transfer_verified = true</span>
+      </div>
+      <div class="panel-body">
+        <p class="mb-4 text-gray-700">Learner state updated in one-writer SQLite database. You may now start a fresh session or inspect technical diagnostics.</p>
+        <div class="mb-4">
+          <button class="primary large-btn btn-restart-session">Start New Diagnostic Session ✨ →</button>
+        </div>
+        <div class="flex gap-4 wrap">
+          <button class="ghost btn-view-map">Inspect Knowledge Map</button>
+          <button class="ghost btn-view-privacy">Inspect §8 Privacy Capsule</button>
+          <button class="ghost btn-view-summary">Inspect Session Commit Summary</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

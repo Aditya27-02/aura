@@ -1,0 +1,17 @@
+__pycache__
+*.pyc
+*.pyo
+.git
+.gitignore
+node_modules
+frontend/node_modules
+*.egg-info
+.env
+.venv
+venv
+.pytest_cache
+artifacts/
+docs/
+tests/
+*.md
+.gemini/

@@ -1,0 +1,38 @@
+services:
+  aura:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # Development mode: hot-reload backend + Vite dev server
+  aura-dev-backend:
+    build:
+      context: .
+      target: runtime
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./adaptive:/app/adaptive:ro
+      - ./server:/app/server
+    environment:
+      - PYTHONPATH=/app
+    command: ["python", "-m", "uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    profiles: ["dev"]
+
+  aura-dev-frontend:
+    image: node:20-slim
+    working_dir: /app/frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app/frontend
+    command: ["npx", "vite", "--host", "0.0.0.0"]
+    profiles: ["dev"]

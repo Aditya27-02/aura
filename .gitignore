@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.benchmarks/
+.venv/
+node_modules/
+frontend/dist/
+artifacts/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite*
+.env
+.env.*
+*.log

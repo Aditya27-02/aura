@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adaptive-learning"
+version = "0.1.0"
+description = "Adaptive Learning Diagnosis + Personalized Companion - core engine (PS17 / PS10)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+adaptive-demo-dsa = "adaptive.scripts.demo_dsa:main"
+adaptive-demo-bio = "adaptive.scripts.demo_biology:main"
+adaptive-eval = "adaptive.evaluation.harness:main"
+
+[tool.setuptools.packages.find]
+include = ["adaptive*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
