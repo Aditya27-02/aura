@@ -7,6 +7,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspa
 
 from fastapi.testclient import TestClient
 from server.main import app
+import server.main as server_main
+from server.session_manager import session_manager
+from adaptive.types import GAP_RECOVERED_PENDING_TRANSFER, LearningGap
 
 client = TestClient(app)
 
@@ -292,4 +295,82 @@ def test_items_endpoint():
     diag_items = r.json()["items"]
     assert all(q["kind"] == "diagnostic" for q in diag_items)
 
+    client.post(f"/api/session/{sid}/close")
+
+
+
+def _install_pending_dsa_transfer(sid):
+    data = session_manager.get_or_404(sid)
+    session = data["session"]
+    gap = LearningGap(
+        gap_id=f"test-gap-{sid}",
+        concept_id="binary_search",
+        misconception_class="mc_boundary_update",
+        hypothesis_probability=0.81,
+        evidence_count=2,
+        recurrence_count=1,
+        status=GAP_RECOVERED_PENDING_TRANSFER,
+        reassessment_result={"original_problem_id": "original-submission"},
+        transfer_verified=False,
+    )
+    session.gap = gap
+    data["pending_transfer_problem_id"] = "bs_practice_first_occurrence"
+    data["pending_transfer_original_problem_id"] = "original-submission"
+    session.asked_question_ids.add("bs_practice_first_occurrence")
+    return data, gap
+
+
+def test_valid_failed_transfer_reactivates_gap():
+    started = client.post("/api/session/start", json={"domain": "DSA"})
+    assert started.status_code == 200
+    sid = started.json()["session_id"]
+    _, gap = _install_pending_dsa_transfer(sid)
+
+    result = client.post(
+        f"/api/session/{sid}/verify-transfer",
+        json={
+            "passed": False,
+            "transfer_problem_id": "bs_practice_first_occurrence",
+            "original_problem_id": "original-submission",
+            "structurally_different": True,
+            "note": "Transfer attempt failed",
+        },
+    )
+
+    assert result.status_code == 200
+    assert result.json()["gap"]["status"] == "active_blocker"
+    assert result.json()["gap"]["transfer_verified"] is False
+    assert gap.status == "active_blocker"
+    client.post(f"/api/session/{sid}/close")
+
+
+def test_no_eligible_transfer_task_keeps_gap_pending(monkeypatch):
+    started = client.post("/api/session/start", json={"domain": "DSA"})
+    assert started.status_code == 200
+    sid = started.json()["session_id"]
+    _, gap = _install_pending_dsa_transfer(sid)
+    monkeypatch.setitem(server_main.CURATED_TRANSFER_ITEMS, "binary_search", set())
+
+    result = client.get(f"/api/session/{sid}/transfer-problem")
+
+    assert result.status_code == 200
+    body = result.json()
+    assert body["available"] is False
+    assert "No unused curated transfer task" in body["message"]
+    assert body["gap"]["status"] == "recovered_pending_transfer"
+    assert body["gap"]["transfer_verified"] is False
+    assert gap.status == "recovered_pending_transfer"
+
+    invalid = client.post(
+        f"/api/session/{sid}/verify-transfer",
+        json={
+            "passed": True,
+            "transfer_problem_id": "bs_practice_first_occurrence",
+            "original_problem_id": "original-submission",
+            "structurally_different": True,
+        },
+    )
+    assert invalid.status_code == 409
+    assert gap.status == "recovered_pending_transfer"
+    assert gap.transfer_verified is False
     client.post(f"/api/session/{sid}/close")
