@@ -86,10 +86,76 @@ def test_complete_dsa_loop():
     r = client.post(f"/api/session/{sid}/teach", json={"target": "binary_search"})
     assert r.status_code == 200
 
-    r = client.post(f"/api/session/{sid}/verify-transfer", json={"passed": True, "note": "all transfer tests passed"})
+    # Transfer cannot skip the explicit original-problem reassessment.
+    transfer_early = client.post(
+        f"/api/session/{sid}/verify-transfer",
+        json={
+            "passed": True,
+            "transfer_problem_id": "bs_practice_first_occurrence",
+            "original_problem_id": "not-yet-confirmed",
+            "structurally_different": True,
+        },
+    )
+    assert transfer_early.status_code == 409
+    before_reassessment = client.get(f"/api/session/{sid}/gap").json()["gap"]
+    assert before_reassessment["status"] == "intervention_applied"
+    assert before_reassessment["transfer_verified"] is False
+
+    r = client.post(
+        f"/api/session/{sid}/mark-recovered",
+        json={"passed": True, "note": "Original problem reassessment passed"},
+    )
+    assert r.status_code == 200
+    assert r.json()["gap"]["status"] == "recovered_pending_transfer"
+
+    task_response = client.get(f"/api/session/{sid}/transfer-problem")
+    assert task_response.status_code == 200
+    task_data = task_response.json()
+    assert task_data["available"] is True
+    transfer_task = task_data["transfer_problem"]
+
+    missing_confirmation = client.post(
+        f"/api/session/{sid}/verify-transfer",
+        json={
+            "passed": True,
+            "transfer_problem_id": transfer_task["id"],
+            "original_problem_id": task_data["original_problem_id"],
+            "structurally_different": False,
+        },
+    )
+    assert missing_confirmation.status_code == 400
+    unchanged = client.get(f"/api/session/{sid}/gap").json()["gap"]
+    assert unchanged["status"] == "recovered_pending_transfer"
+    assert unchanged["transfer_verified"] is False
+
+    invalid_selection = client.post(
+        f"/api/session/{sid}/verify-transfer",
+        json={
+            "passed": True,
+            "transfer_problem_id": "not-the-selected-task",
+            "original_problem_id": task_data["original_problem_id"],
+            "structurally_different": True,
+        },
+    )
+    assert invalid_selection.status_code == 400
+    unchanged = client.get(f"/api/session/{sid}/gap").json()["gap"]
+    assert unchanged["status"] == "recovered_pending_transfer"
+    assert unchanged["transfer_verified"] is False
+
+    r = client.post(
+        f"/api/session/{sid}/verify-transfer",
+        json={
+            "passed": True,
+            "transfer_problem_id": transfer_task["id"],
+            "original_problem_id": task_data["original_problem_id"],
+            "structurally_different": task_data["structurally_different"],
+            "note": "Curated transfer task passed",
+        },
+    )
     assert r.status_code == 200
     vr = r.json()
     assert vr["gap"]["transfer_verified"] is True
+    assert vr["gap"]["status"] == "recovered"
 
     r = client.get(f"/api/session/{sid}/map")
     assert r.status_code == 200
