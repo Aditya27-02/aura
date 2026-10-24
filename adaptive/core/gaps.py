@@ -189,9 +189,18 @@ def make_transfer_check(
     passed: bool,
     note: str = "",
     submitted_at: Optional[str] = None,
+    *,
+    structurally_different: bool = False,
 ) -> TransferCheck:
-    structurally_different = (
-        transfer_item.id != original_problem_id
+    """Build a transfer result without assuming that a different ID means different structure.
+
+    The caller must explicitly confirm structural difference after comparing the
+    transfer item with the original problem. The helper still rejects the same
+    problem ID and items without a concept.
+    """
+    verified_difference = (
+        structurally_different
+        and transfer_item.id != original_problem_id
         and bool(transfer_item.concept_id)
     )
     return TransferCheck(
@@ -199,7 +208,7 @@ def make_transfer_check(
         concept_id=transfer_item.concept_id,
         original_problem_id=original_problem_id,
         prompt=transfer_item.prompt,
-        structurally_different=structurally_different,
+        structurally_different=verified_difference,
         passed=passed,
         submitted_at=submitted_at or _iso_now(),
         evaluation_note=note,
