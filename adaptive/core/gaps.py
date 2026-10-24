@@ -121,6 +121,10 @@ class GapRegistry:
         if transfer_check.passed is None:
             return gap
 
+        # A transfer check cannot skip the original-problem reassessment stage.
+        if gap.status != GAP_RECOVERED_PENDING_TRANSFER:
+            return gap
+
         valid_transfer = (
             transfer_check.structurally_different
             and transfer_check.concept_id == gap.concept_id
