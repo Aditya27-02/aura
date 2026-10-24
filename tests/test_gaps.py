@@ -95,6 +95,20 @@ class TestGapLifecycle(unittest.TestCase):
         self.assertEqual(gap.status, GAP_RECOVERED_PENDING_TRANSFER)
         self.assertFalse(gap.transfer_verified)
 
+    def test_transfer_check_does_not_infer_structure_from_a_different_id(self):
+        transfer = select_transfer_problem(self.pack.items, "binary_search")
+        check = make_transfer_check(transfer, None, passed=True)
+
+        self.assertFalse(check.structurally_different)
+
+        gap = self.registry.materialize("binary_search", self.hyp, self.event, self.pack.graph, self.state)
+        self.registry.mark_intervention_applied(gap, "int-1")
+        self.registry.mark_original_recovered(gap, {"retry": "passed"})
+        self.registry.verify_transfer(gap, check)
+
+        self.assertEqual(gap.status, GAP_RECOVERED_PENDING_TRANSFER)
+        self.assertFalse(gap.transfer_verified)
+
     def test_same_problem_cannot_count_as_transfer(self):
         gap = self.registry.materialize("binary_search", self.hyp, self.event, self.pack.graph, self.state)
         self.registry.mark_intervention_applied(gap, "int-1")
