@@ -52,7 +52,7 @@ class TestGapLifecycle(unittest.TestCase):
         self.registry.mark_original_recovered(gap, {"retry": "passed"})
         transfer = select_transfer_problem(self.pack.items, "binary_search")
         self.assertIsNotNone(transfer)
-        check = make_transfer_check(transfer, None, passed=True)
+        check = make_transfer_check(transfer, None, passed=True, structurally_different=True)
         self.registry.verify_transfer(gap, check)
         self.assertEqual(gap.status, GAP_RECOVERED)
         self.assertTrue(gap.transfer_verified)
@@ -62,7 +62,7 @@ class TestGapLifecycle(unittest.TestCase):
         self.registry.mark_intervention_applied(gap, "int-1")
         self.registry.mark_original_recovered(gap, {"retry": "passed"})
         transfer = select_transfer_problem(self.pack.items, "binary_search")
-        check = make_transfer_check(transfer, None, passed=False)
+        check = make_transfer_check(transfer, None, passed=False, structurally_different=True)
         self.registry.verify_transfer(gap, check)
         self.assertEqual(gap.status, GAP_ACTIVE_BLOCKER)
         self.assertFalse(gap.transfer_verified)
@@ -70,7 +70,7 @@ class TestGapLifecycle(unittest.TestCase):
     def test_transfer_cannot_skip_original_reassessment(self):
         gap = self.registry.materialize("binary_search", self.hyp, self.event, self.pack.graph, self.state)
         transfer = select_transfer_problem(self.pack.items, "binary_search")
-        check = make_transfer_check(transfer, None, passed=True)
+        check = make_transfer_check(transfer, None, passed=True, structurally_different=True)
 
         self.registry.verify_transfer(gap, check)
 
@@ -100,7 +100,7 @@ class TestGapLifecycle(unittest.TestCase):
         self.registry.mark_intervention_applied(gap, "int-1")
         self.registry.mark_original_recovered(gap, {"retry": "passed"})
         transfer = select_transfer_problem(self.pack.items, "binary_search")
-        check = make_transfer_check(transfer, transfer.id, passed=True)
+        check = make_transfer_check(transfer, transfer.id, passed=True, structurally_different=True)
 
         self.registry.verify_transfer(gap, check)
 
