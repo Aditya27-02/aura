@@ -17,6 +17,7 @@ class AnswerDiagnosticRequest(BaseModel):
 
 class MarkRecoveredRequest(BaseModel):
     passed: bool
+    original_problem_id: Optional[str] = None
     note: str = ""
 
 
