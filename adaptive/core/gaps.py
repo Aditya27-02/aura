@@ -39,7 +39,7 @@ class GapRegistry:
         candidate -> active_blocker (evidence clears confidence)
         active_blocker -> intervention_applied (intervention delivered)
         intervention_applied -> recovered_pending_transfer (original passes)
-        recovered_pending_transfer -> recovered (transfer problem passes)
+        recovered_pending_transfer -> recovered (valid, different transfer passes)
         recovered_pending_transfer -> active_blocker (transfer fails)
         any -> stale_reassess (stale)
     """
@@ -106,17 +106,35 @@ class GapRegistry:
         return gap
 
     def mark_original_recovered(self, gap: LearningGap, reassessment_result: dict, now: Optional[str] = None) -> LearningGap:
-        """Original problem passes after the intervention: pending transfer, not recovered."""
+        """Original problem passes after intervention: pending transfer, not recovered."""
         gap.reassessment_result = reassessment_result
         gap.status = GAP_RECOVERED_PENDING_TRANSFER
-        gap.recovery_confidence = min(gap.recovery_confidence + 0.2 + 0.1 * len(gap.intervention_ids), 0.95)
+        # Original-problem success alone must never preserve a prior transfer pass.
+        gap.transfer_verified = False
         gap.last_confirmed = now or _iso_now()
+        gap.recovery_confidence = min(gap.recovery_confidence + 0.2 + 0.1 * len(gap.intervention_ids), 0.95)
         return gap
 
     def verify_transfer(self, gap: LearningGap, transfer_check: TransferCheck) -> LearningGap:
-        """The gap is only recovered when the structurally different problem passes."""
+        """Only a passing, explicitly different same-concept check verifies recovery."""
+        # Unknown outcomes are not evidence. Preserve the current lifecycle state.
         if transfer_check.passed is None:
             return gap
+
+        valid_transfer = (
+            transfer_check.structurally_different
+            and transfer_check.concept_id == gap.concept_id
+            and bool(transfer_check.transfer_problem_id)
+            and transfer_check.transfer_problem_id != transfer_check.original_problem_id
+        )
+        if not valid_transfer:
+            # An invalid check cannot prove recovery. It also must not erase an
+            # already-active blocker or cause an unrelated concept to be accepted.
+            gap.transfer_verified = False
+            if gap.status == GAP_RECOVERED:
+                gap.status = GAP_RECOVERED_PENDING_TRANSFER
+            return gap
+
         gap.transfer_verified = bool(transfer_check.passed)
         if transfer_check.passed:
             gap.status = GAP_RECOVERED
@@ -141,7 +159,7 @@ def select_transfer_problem(
     original_problem_id: Optional[str] = None,
     exclude_ids: set[str] | None = None,
 ) -> Optional[Question]:
-    """Pick a structurally different problem on the same concept for transfer verification."""
+    """Pick a different same-concept practice problem when one is available."""
     exclude = set(exclude_ids) if exclude_ids else set()
     if original_problem_id:
         exclude.add(original_problem_id)
@@ -157,8 +175,8 @@ def select_transfer_problem(
     if staged:
         return staged[0]
 
-    all_on_concept = [q for q in items if q.concept_id == concept_id and q.id not in exclude]
-    return all_on_concept[0] if all_on_concept else (items[0] if items else None)
+    # Never silently return an unrelated concept or an excluded original item.
+    return None
 
 
 def make_transfer_check(
@@ -168,12 +186,16 @@ def make_transfer_check(
     note: str = "",
     submitted_at: Optional[str] = None,
 ) -> TransferCheck:
+    structurally_different = (
+        transfer_item.id != original_problem_id
+        and bool(transfer_item.concept_id)
+    )
     return TransferCheck(
         transfer_problem_id=transfer_item.id,
         concept_id=transfer_item.concept_id,
         original_problem_id=original_problem_id,
         prompt=transfer_item.prompt,
-        structurally_different=True,
+        structurally_different=structurally_different,
         passed=passed,
         submitted_at=submitted_at or _iso_now(),
         evaluation_note=note,
